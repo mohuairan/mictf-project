@@ -61,6 +61,21 @@ Across two replayed hands, MICTF maintains post-contact hold-motion gap at the *
 
 Detailed numbers, ablations, and per-hand solver diagnostics will accompany the paper.
 
+## Demonstrations
+
+> Video links will be added once the clips are uploaded. The segments below illustrate closed-chain contact maintenance under live operator motion.
+
+| Segment | What it shows | Link |
+|---|---|---|
+| Closed-chain hold (clip 1) | Pad-level contact maintained while the operator continues to move after acquisition. | [▶ Watch on YouTube](https://youtu.be/rv6dafFKCII) |
+| Closed-chain hold (clip 2) | Post-contact behavior across hand geometries. | _to be added_ |
+
+<p align="center">
+  <a href="https://youtu.be/rv6dafFKCII">
+    <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="MICTF closed-chain hold demo" width="70%">
+  </a>
+</p>
+
 ## Roadmap
 
 - [x] Morphology import + automatic contact-frame extraction
