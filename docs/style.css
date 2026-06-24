@@ -1,0 +1,228 @@
+/* MICTF project page — conference-paper style */
+:root {
+  --bg: #0d1b2a;
+  --bg-2: #13283d;
+  --surface: #1b3a5b;
+  --text: #e6edf3;
+  --text-dim: #9fb3c8;
+  --accent: #2ec4b6;
+  --accent-2: #6ad4c9;
+  --rule: #2a4565;
+  --code-bg: #0a1420;
+  --warn: #f0a868;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+               "Noto Sans SC", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---------- Header / hero ---------- */
+.hero {
+  text-align: center;
+  padding: 48px 24px 32px;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  border-bottom: 1px solid var(--rule);
+}
+.hero img.banner {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 6px;
+  margin-bottom: 28px;
+}
+.hero h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.hero .subtitle {
+  font-size: 1.15rem;
+  color: var(--accent-2);
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+.hero .authors {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+.hero .venue {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.badges {
+  margin-top: 18px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.badges img { height: 24px; }
+
+/* ---------- Lang switch ---------- */
+.lang-switch {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+.lang-switch a {
+  color: var(--text-dim);
+  text-decoration: none;
+  margin: 0 4px;
+}
+.lang-switch a.active { color: var(--accent); font-weight: 600; }
+.lang-switch a:hover { color: var(--accent-2); }
+
+/* ---------- Sections ---------- */
+section {
+  padding: 44px 0;
+  border-bottom: 1px solid var(--rule);
+}
+section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+section h2::before {
+  content: "";
+  width: 4px;
+  height: 1.2em;
+  background: var(--accent);
+  border-radius: 2px;
+}
+section h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  color: var(--accent-2);
+}
+p { margin-bottom: 14px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+em { color: var(--text-dim); }
+
+/* ---------- Abstract ---------- */
+.abstract-box {
+  background: var(--code-bg);
+  border-left: 3px solid var(--accent);
+  padding: 18px 22px;
+  border-radius: 0 6px 6px 0;
+  color: var(--text-dim);
+}
+
+/* ---------- Demo ---------- */
+.demo-media {
+  text-align: center;
+  margin: 20px 0;
+}
+.demo-media img, .demo-media video {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+}
+.demo-media .caption {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 10px;
+  font-style: italic;
+}
+.youtube-thumb { transition: transform 0.15s; }
+.youtube-thumb:hover { transform: scale(1.01); }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+th {
+  color: var(--accent-2);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.best td { color: var(--accent); font-weight: 600; }
+tr.mictf td { background: rgba(46, 196, 182, 0.06); }
+
+/* ---------- Architecture cards ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+}
+.card h4 {
+  color: var(--accent);
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+.card p { font-size: 0.88rem; color: var(--text-dim); margin: 0; }
+
+/* ---------- Citation ---------- */
+.citation {
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 16px 18px;
+  font-family: "SF Mono", "Consolas", "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ---------- Footer ---------- */
+footer {
+  padding: 32px 0 48px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .hero h1 { font-size: 1.7rem; }
+  .hero .subtitle { font-size: 1rem; }
+  .container { padding: 0 16px; }
+  .lang-switch { top: 8px; right: 8px; font-size: 0.8rem; }
+}

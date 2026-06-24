@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MICTF —— 形态信息驱动的接触模板框架</title>
+  <meta name="description" content="在线、无需训练数据的重定向方法，在精确接触建立之后维持指腹级接触。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="lang-switch">
+  <a href="index.html">EN</a> · <a href="index.zh.html" class="active">中文</a>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="container">
+    <img src="assets/banner.png" alt="MICTF banner" class="banner">
+    <h1>MICTF</h1>
+    <div class="subtitle">形态信息驱动的接触模板框架</div>
+    <div class="authors">面向异构灵巧手的在线接触维持重定向</div>
+    <div class="venue">📄 准备投递 IEEE RA-L</div>
+    <div class="badges">
+      <a href="https://youtu.be/rv6dafFKCII"><img alt="YouTube Demo" src="https://img.shields.io/badge/演示-YouTube-red?logo=youtube"></a>
+      <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
+      <img alt="MuJoCo" src="https://img.shields.io/badge/MuJoCo-3.x-orange">
+    </div>
+  </div>
+</header>
+
+<!-- ==================== ABSTRACT ==================== -->
+<section>
+  <div class="container">
+    <h2>摘要</h2>
+    <div class="abstract-box">
+      MICTF 是一种在线、无需训练数据的重定向方法，在精确接触建立<em>之后</em>维持指腹（pad）级接触。
+      它引入形态学导出的<strong>接触模板</strong>作为操作者意图与机器人执行之间的中间表示。
+      一个贝叶斯意图滤波器从 Quest 3 观测中选择当前活跃模板；一个闭链投影层在操作者持续运动下维持所选接触。
+      在五只位控型灵巧手上，MICTF 将接触后保持间隙维持在 <strong>8.3–19.2&nbsp;mm</strong>，
+      而 DexPilot 式向量重定向为 <strong>27.7–76.6&nbsp;mm</strong>，且无任何数据免训练基线能建立稳定接触。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DEMO ==================== -->
+<section>
+  <div class="container">
+    <h2>演示</h2>
+
+    <h3>四手型对比</h3>
+    <p>同一条回放的 Quest 3 输入，四种形态（Wuji · Allegro · ORCA · Sharpa）。闭链接触维持，1.5 倍速。</p>
+    <div class="demo-media">
+      <img src="assets/multihand_demo.gif" alt="四手型闭链接触对比">
+      <div class="caption">接触建立后，四只手均维持了指腹级接触。</div>
+    </div>
+
+    <h3>一条轨迹，五只手</h3>
+    <p>同一条 Quest 3 手部追踪回放映射到五种形态，展示无需逐手调参即可在所有手型上建立稳定接触。</p>
+    <div class="demo-media">
+      <a href="https://youtu.be/rv6dafFKCII" class="youtube-thumb">
+        <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="一轨迹五手型演示" style="width:80%">
+      </a>
+      <div class="caption">▶ <a href="https://youtu.be/rv6dafFKCII">在 YouTube 上观看</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== METHOD ==================== -->
+<section>
+  <div class="container">
+    <h2>方法</h2>
+    <p>
+      绝大多数在线重定向方法 —— DexPilot 式向量跟踪、关节复制、指尖 IK —— 回答的都是
+      <em>"指尖该去哪里？"</em> 一旦两个指腹已经接触、操作者还在继续移动，这些方法都没有显式机制来维持
+      接触面的持续贴合，接触就在不知不觉中被撑开。
+    </p>
+    <p>
+      这是结构性的：一个仅被 3D 指尖向量约束的 4-DOF 机器人拇指，会留下一个未被约束的自由度
+      —— 指腹绕"拇指-指尖轴"的旋转。MICTF 转而<strong>用任务几何吸收这个自由度</strong>：
+      一个指腹法向对齐残差强制拇指指腹朝向对侧表面。运动学冗余反而成了<em>维持</em>接触的机制。
+    </p>
+
+    <h3>架构</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>形态学导入</h4>
+        <p>解析 MJCF 手部模型，推断指链，从网格面片自动提取指腹接触坐标系，导出每只手的运行时容差。</p>
+      </div>
+      <div class="card">
+        <h4>接触模板</h4>
+        <p>离散可执行对象（张开 / 精确捏合 / 多点捏合 / 闭合），携带接触角色、局部指腹坐标系与求解器容差。</p>
+      </div>
+      <div class="card">
+        <h4>贝叶斯意图滤波</h4>
+        <p>一个隐马尔可夫前向更新选择当前活跃模板；转移代价由机器人自身工作空间中的几何邻近度决定。</p>
+      </div>
+      <div class="card">
+        <h4>闭链投影</h4>
+        <p>一个有界非线性最小二乘求解器在移动输入下维持所选接触；指腹法向残差消解拇指冗余。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RESULTS ==================== -->
+<section>
+  <div class="container">
+    <h2>实验结果</h2>
+    <p>使用真实 Quest 3/WebXR 日志在 MuJoCo 中回放。每只手的所有方法变体回放同一条 JSONL 输入，因此差异纯粹来自算法。<strong>接触后保持间隙（主指标）：</strong></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>手型</th><th>方法</th><th class="num">保持间隙 (mm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mictf"><td>Wuji Right</td><td><strong>MICTF</strong></td><td class="num"><strong>8.3</strong></td></tr>
+          <tr><td>Wuji Right</td><td>DexPilot 式</td><td class="num">40.3</td></tr>
+          <tr><td>Wuji Right</td><td>关节复制</td><td class="num">42.4</td></tr>
+          <tr><td>Wuji Right</td><td>指尖 IK</td><td class="num">45.8</td></tr>
+          <tr class="mictf"><td>Allegro Right</td><td><strong>MICTF</strong></td><td class="num"><strong>15.4</strong></td></tr>
+          <tr><td>Allegro Right</td><td>DexPilot 式</td><td class="num">51.0</td></tr>
+          <tr><td>Allegro Right</td><td>关节复制</td><td class="num">48.2</td></tr>
+          <tr class="mictf"><td>LEAP Right</td><td><strong>MICTF</strong></td><td class="num"><strong>19.2</strong></td></tr>
+          <tr><td>LEAP Right</td><td>DexPilot 式</td><td class="num">44.4</td></tr>
+          <tr class="mictf"><td>ORCA Right v1</td><td><strong>MICTF</strong></td><td class="num"><strong>8.9</strong></td></tr>
+          <tr><td>ORCA Right v1</td><td>DexPilot 式</td><td class="num">23.6</td></tr>
+          <tr class="mictf"><td>Sharpa Wave</td><td><strong>MICTF</strong></td><td class="num"><strong>13.5</strong></td></tr>
+          <tr><td>Sharpa Wave</td><td>DexPilot 式</td><td class="num">39.7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      所有基线均无法建立稳定接触（所有手型上 Acquire&nbsp;=&nbsp;0.000）；MICTF 在每只手上都能过渡到保持接触
+      （Acquire&nbsp;0.222–0.778）。DexPilot 在向量误差上更低（33.9–47.6&nbsp;mm，MICTF 为 54.7–106.8&nbsp;mm）
+      —— 这是预期内的，因为 MICTF 以端点向量保真度换取指腹对齐。关闭闭链求解器后任务距离回落到基线水平，
+      证实起作用的是投影层本身。
+    </p>
+  </div>
+</section>
+
+<!-- ==================== CITATION ==================== -->
+<section>
+  <div class="container">
+    <h2>引用</h2>
+    <p>论文发表后将提供 BibTeX 条目。在此之前如需引用本项工作进行中的版本，请引用本页面或发起一个 GitHub Discussion。</p>
+    <div class="citation">@misc{mictf2026,
+  title        = {Morphology-Informed Contact Templates for
+                  Online Contact-Maintaining Dexterous Retargeting},
+  author       = {Anonymous},
+  howpublished = {Project page},
+  year         = {2026},
+  note         = {In preparation}
+}</div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>MICTF · 项目主页 · 源代码将随论文一并开源。</p>
+  </div>
+</footer>
+
+</body>
+</html>

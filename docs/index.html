@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MICTF — Morphology-Informed Contact Template Framework</title>
+  <meta name="description" content="Online, data-free retargeting for maintaining pad-level contact after a precision contact has been acquired.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="lang-switch">
+  <a href="index.html" class="active">EN</a> · <a href="index.zh.html">中文</a>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="container">
+    <img src="assets/banner.png" alt="MICTF banner" class="banner">
+    <h1>MICTF</h1>
+    <div class="subtitle">Morphology-Informed Contact Template Framework</div>
+    <div class="authors">Online contact-maintaining retargeting for heterogeneous dexterous hands</div>
+    <div class="venue">📄 In preparation for IEEE RA-L</div>
+    <div class="badges">
+      <a href="https://youtu.be/rv6dafFKCII"><img alt="YouTube Demo" src="https://img.shields.io/badge/Demo-YouTube-red?logo=youtube"></a>
+      <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
+      <img alt="MuJoCo" src="https://img.shields.io/badge/MuJoCo-3.x-orange">
+    </div>
+  </div>
+</header>
+
+<!-- ==================== ABSTRACT ==================== -->
+<section>
+  <div class="container">
+    <h2>Abstract</h2>
+    <div class="abstract-box">
+      MICTF is an online, data-free retargeting method for maintaining pad-level contact
+      <em>after</em> a precision contact has been acquired. It introduces morphology-derived
+      <strong>contact templates</strong> as an intermediate representation between operator
+      intent and robot execution. A Bayesian intent filter selects the active template from
+      Quest 3 observations; a closed-chain projection layer maintains the selected contact
+      under continuous operator motion. Across five position-controlled hands, MICTF keeps
+      post-contact hold gap at <strong>8.3–19.2&nbsp;mm</strong> versus
+      <strong>27.7–76.6&nbsp;mm</strong> for DexPilot-style vector retargeting, while no
+      data-free baseline acquires stable contact.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DEMO ==================== -->
+<section>
+  <div class="container">
+    <h2>Demonstrations</h2>
+
+    <h3>Four-hand side-by-side</h3>
+    <p>Same replayed Quest 3 input, four morphologies (Wuji · Allegro · ORCA · Sharpa). Closed-chain contact maintenance, 1.5× speed.</p>
+    <div class="demo-media">
+      <img src="assets/multihand_demo.gif" alt="Four-hand closed-chain contact demo">
+      <div class="caption">Pad-level contact is maintained across all four hands after acquisition.</div>
+    </div>
+
+    <h3>One trajectory, five hands</h3>
+    <p>The same Quest 3 hand-tracking replay mapped onto five morphologies, showing stable contact across all of them without per-hand tuning.</p>
+    <div class="demo-media">
+      <a href="https://youtu.be/rv6dafFKCII" class="youtube-thumb">
+        <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="One trajectory five hands demo" style="width:80%">
+      </a>
+      <div class="caption">▶ <a href="https://youtu.be/rv6dafFKCII">Watch on YouTube</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== METHOD ==================== -->
+<section>
+  <div class="container">
+    <h2>Method</h2>
+    <p>
+      Most online retargeting methods — DexPilot-style vector tracking, joint copy, fingertip
+      IK — answer <em>"where should the fingertips go?"</em> Once two pads have made contact
+      and the operator keeps moving, these representations have nothing to say about how the
+      surfaces should keep meeting, and the contact silently opens up.
+    </p>
+    <p>
+      This is structural: a 4-DOF robot thumb constrained only by a 3D thumb-tip vector has one
+      unconstrained DOF — pad rotation about the thumb–fingertip axis. MICTF instead
+      <strong>consumes that free DOF with task geometry</strong>: a pad-normal alignment
+      residual forces the thumb pad to face the opposing surface. Kinematic redundancy becomes
+      the mechanism that <em>maintains</em> contact.
+    </p>
+
+    <h3>Architecture</h3>
+    <div class="cards">
+      <div class="card">
+        <h4>Morphology import</h4>
+        <p>Parse an MJCF hand, infer finger chains, auto-extract pad contact frames from mesh patches, derive per-hand runtime tolerances.</p>
+      </div>
+      <div class="card">
+        <h4>Contact templates</h4>
+        <p>Discrete executable objects (open / precision pinch / multi-pinch / closure) carrying contact roles, local pad frames, and solver tolerances.</p>
+      </div>
+      <div class="card">
+        <h4>Bayesian intent filter</h4>
+        <p>A hidden-Markov forward update selects the active template; transitions priced by geometric proximity in the robot's own workspace.</p>
+      </div>
+      <div class="card">
+        <h4>Closed-chain projection</h4>
+        <p>A bounded nonlinear least-squares solver maintains the selected contact under moving input; pad-normal residual resolves thumb redundancy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RESULTS ==================== -->
+<section>
+  <div class="container">
+    <h2>Results</h2>
+    <p>Real Quest 3/WebXR logs replayed in MuJoCo. Every method variant for a hand replays the same JSONL input, so differences are purely algorithmic. <strong>Post-contact hold gap (primary metric):</strong></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hand</th><th>Method</th><th class="num">Hold gap (mm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mictf"><td>Wuji Right</td><td><strong>MICTF</strong></td><td class="num"><strong>8.3</strong></td></tr>
+          <tr><td>Wuji Right</td><td>DexPilot-style</td><td class="num">40.3</td></tr>
+          <tr><td>Wuji Right</td><td>Joint copy</td><td class="num">42.4</td></tr>
+          <tr><td>Wuji Right</td><td>Fingertip IK</td><td class="num">45.8</td></tr>
+          <tr class="mictf"><td>Allegro Right</td><td><strong>MICTF</strong></td><td class="num"><strong>15.4</strong></td></tr>
+          <tr><td>Allegro Right</td><td>DexPilot-style</td><td class="num">51.0</td></tr>
+          <tr><td>Allegro Right</td><td>Joint copy</td><td class="num">48.2</td></tr>
+          <tr class="mictf"><td>LEAP Right</td><td><strong>MICTF</strong></td><td class="num"><strong>19.2</strong></td></tr>
+          <tr><td>LEAP Right</td><td>DexPilot-style</td><td class="num">44.4</td></tr>
+          <tr class="mictf"><td>ORCA Right v1</td><td><strong>MICTF</strong></td><td class="num"><strong>8.9</strong></td></tr>
+          <tr><td>ORCA Right v1</td><td>DexPilot-style</td><td class="num">23.6</td></tr>
+          <tr class="mictf"><td>Sharpa Wave</td><td><strong>MICTF</strong></td><td class="num"><strong>13.5</strong></td></tr>
+          <tr><td>Sharpa Wave</td><td>DexPilot-style</td><td class="num">39.7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      No baseline acquires stable contact (Acquire&nbsp;=&nbsp;0.000 on all hands); MICTF
+      transitions into held contact on every hand (Acquire&nbsp;0.222–0.778). DexPilot achieves
+      lower vector error (33.9–47.6&nbsp;mm vs. MICTF's 54.7–106.8&nbsp;mm) — expected, since
+      MICTF trades endpoint-vector fidelity for pad alignment. Disabling the closed-chain solver
+      collapses task distance to baseline levels, confirming the projection layer does the work.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== CITATION ==================== -->
+<section>
+  <div class="container">
+    <h2>Citation</h2>
+    <p>A BibTeX entry will be provided upon publication. For now, please reference this page or open a GitHub Discussion if you need to cite the work in progress.</p>
+    <div class="citation">@misc{mictf2026,
+  title        = {Morphology-Informed Contact Templates for
+                  Online Contact-Maintaining Dexterous Retargeting},
+  author       = {Anonymous},
+  howpublished = {Project page},
+  year         = {2026},
+  note         = {In preparation}
+}</div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>MICTF · Project page · Source code to be released with the paper.</p>
+  </div>
+</footer>
+
+</body>
+</html>
