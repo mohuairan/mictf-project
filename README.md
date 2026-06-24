@@ -30,6 +30,10 @@ MICTF is an online, data-free retargeting method for maintaining pad-level conta
 
 The long-term framework vision is zero-shot cross-embodiment teleoperation via contact primitives. This page reflects the current state, which focuses on position-controlled dexterous hands and online post-contact maintenance.
 
+<p align="center">
+  <img src="assets\system_overview.png" alt="System Overview" width="100%">
+</p>
+
 ## Why MICTF
 
 Most online retargeting methods — DexPilot-style vector tracking, joint copy, fingertip IK, AnyTeleop-style pipelines — answer "where should the fingertips go?" They work well in free space. But once two pads have made contact and the operator keeps moving, these representations have nothing to say about how the surfaces should keep meeting. The contact silently opens up.
