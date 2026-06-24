@@ -36,13 +36,9 @@ body {
 .hero {
   position: relative;
   text-align: center;
-  padding: 72px 24px 72px;
   overflow: hidden;
   border-bottom: 1px solid var(--rule);
-  min-height: 420px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  min-height: 460px;
 }
 /* background YouTube video, scaled to cover */
 .hero-video {
@@ -77,8 +73,12 @@ body {
   z-index: 1;
 }
 .hero .container {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;               /* text above overlay */
+  padding-bottom: 56px;
 }
 .hero img.banner {
   width: 100%;
