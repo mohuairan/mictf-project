@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mohuairan.github.io/mictf-project/"><img src="https://img.shields.io/badge/Project-Page-2ec4b6?logo=github&logoColor=white" alt="Project Page"></a>
   <a href="https://youtu.be/rv6dafFKCII"><img src="https://img.shields.io/badge/Demo-YouTube-red?logo=youtube" alt="YouTube Demo"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python 3.10+">

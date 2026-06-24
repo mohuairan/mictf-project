@@ -262,6 +262,8 @@ footer {
   color: var(--text-dim);
   font-size: 0.85rem;
 }
+footer a { display: inline-block; margin-bottom: 12px; }
+footer a img { height: 24px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
