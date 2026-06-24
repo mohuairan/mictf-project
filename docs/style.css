@@ -36,12 +36,12 @@ body {
 .hero {
   position: relative;
   text-align: center;
-  padding: 72px 24px 56px;
+  padding: 72px 24px 72px;
   overflow: hidden;
   border-bottom: 1px solid var(--rule);
   min-height: 420px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
 }
 /* background YouTube video, scaled to cover */
