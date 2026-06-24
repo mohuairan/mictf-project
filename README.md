@@ -1,144 +1,237 @@
 <p align="center">
-  <img src="assets/banner.png" alt="MICTF — Morphology-Informed Contact Template Framework" width="100%">
+  <img src="assets/banner.png" alt="MICTF Banner" width="100%">
 </p>
 
-# MICTF — Morphology-Informed Contact Template Framework
+<h1 align="center">MICTF</h1>
 
-**Online, data-free retargeting that maintains pad-level contact *after* a precision pinch has been acquired.**
+<p align="center">
+  <b>Morphology-Informed Contact Template Framework</b><br>
+  Zero-shot cross-embodiment dexterous hand teleoperation via contact primitives
+</p>
 
-🌐 **Language / 语言:** **English** · [简体中文](README.zh-CN.md)
+<p align="center">
+  <a href="https://youtu.be/rv6dafFKCII"><img src="https://img.shields.io/badge/Demo-YouTube-red?logo=youtube" alt="YouTube Demo"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/MuJoCo-3.x-orange" alt="MuJoCo 3.x">
+  <img src="https://img.shields.io/badge/Status-Paper_in_Preparation-yellow" alt="Status">
+</p>
 
-> *Morphology-Informed Contact Templates for Online Contact-Maintaining Dexterous Retargeting*
-> 📄 **Status:** In preparation for IEEE RA-L.
-> 💬 Discussion & questions: [GitHub Discussions](../../discussions) · Issues: [GitHub Issues](../../issues)
+<p align="center">
+  <b>Language:</b> <b>English</b> | <a href="README.zh-CN.md">简体中文</a>
+</p>
 
 ---
 
-## Why this work exists
+## ✨ Highlights
 
-Most dexterous retargeting methods — DexPilot-style vector tracking, joint copy, fingertip IK — answer the question **"where should the fingertips go?"** They work well in free space. But once two pads have touched and the operator keeps moving, none of these representations has an explicit mechanism to **keep the surfaces meeting**. The result: the fingertips stay near their vector targets, but the contact silently opens up.
+- **Zero-shot hand import** — Drop in any MJCF hand model; contact templates are auto-generated from morphology and transmission structure. No per-hand tuning or demonstration data required.
+- **Explicit contact semantics** — Replaces implicit geometric error with structured contact primitives (precision pinch, multi-finger pinch, closure), enabling cross-embodiment transfer of manipulation intent.
+- **Bayesian intent inference** — HMM-based posterior estimation with hysteresis and dwell-time constraints. Noise sensitivity tests show **0% template flip rate** across all tested hands.
+- **Closed-chain contact projection** — Jointly solves gap closure, normal alignment, and smoothness residuals. Reduces mean contact distance by **74–82%** vs. DexPilot-style baselines on heterogeneous hands.
+- **Dual execution paths** — Joint-space closed-chain solver for direct-drive hands; actuator-space proxy solver for coupled/underactuated mechanisms.
 
-This happens for a structural reason. A 4-DOF robot thumb constrained only by a 3D tip-position vector has one unconstrained DOF — rotation of the pad about the thumb–fingertip axis. DexPilot's smoothness regularizer parks this free DOF near the seed; it provides no contact-geometric guidance. Follow-up systems (AnyTeleop, Bunny-VisionPro) add orientation regularization to *mitigate* the ambiguity.
+---
 
-MICTF starts from a different question: **what contact should the robot maintain, and what morphology-specific geometry enforces it?**
+## 🔍 Motivation
 
-## Core insight
+Existing retargeting methods (DexPilot, Joint Copy, Fingertip IK) map **where fingertips should go**, but none explicitly represent **what contact relation should be maintained**. This gap causes three failure modes during cross-embodiment teleoperation:
 
-> Any retargeting map from a low-dimensional task target to a redundant kinematic chain leaves a null space. Regularization-based approaches fill it with posture priors. **MICTF fills it with the task's own contact geometry**, so that under-determined DOF serve contact maintenance rather than drifting toward an arbitrary default.
+| Failure Mode | Root Cause |
+|:---|:---|
+| Thumb base oscillation during open ↔ close transitions | Null-space redundancy in position-only IK |
+| Contact normal flipping | No explicit pad-normal alignment constraint |
+| Silent contact loss during post-acquisition motion | No closed-chain maintenance mechanism |
 
-Concretely, MICTF **resolves** the thumb's free DOF by consuming it with a pad-normal alignment residual that forces the thumb pad to face the opposing surface. Kinematic redundancy — usually a nuisance to be regularized away — becomes the mechanism that *maintains* contact.
+MICTF addresses these by lifting the retargeting intermediate representation from geometric trajectories to **contact primitives with physical semantics**.
 
-This shifts the contribution. The value is not a faster solver or a richer latent, but recognizing that:
+---
 
-1. **Post-contact maintenance is a distinct operating regime** from approach — retargeters that apply the same free-space cost in both regimes lose contact the moment the operator moves.
-2. **The hand's own pad geometry — not a posture prior — is the right constraint** for resolving redundancy during that regime.
-3. **The contact point itself can be an optimization variable** — MICTF's surface extension co-optimizes joint angles and pad-surface UV coordinates, converting a hard feasibility problem into a softer fit over the joint-surface product space.
-
-## System architecture
+## 🏗️ Architecture
 
 ```
-Quest 3 hand joints
-        │
-        ▼
-┌─────────────────────┐
-│  Palm-frame obs.    │  Compute thumb–finger distances, curl, contact-location scores
-└────────┬────────────┘
-         ▼
-┌─────────────────────┐
-│  Bayesian template  │  HMM forward update; transitions priced by FK-based
-│  intent filter      │  geometric proximity in the robot's own workspace
-└────────┬────────────┘
-         ▼
-┌─────────────────────┐     ┌──────────────────────┐
-│  Execution state    │────▶│  Approach mode:      │  Free-space tracking toward canonical pose
-│  machine            │     │  Hold mode:          │  Constraint maintenance under moving input
-└────────┬────────────┘     └──────────────────────┘
-         ▼
-┌─────────────────────┐
-│  Closed-chain       │  Bounded NLS with pad-normal + gap + tracking residuals;
-│  projection solver  │  surface UV co-optimization when metadata available
-└────────┬────────────┘
-         ▼
-  Bounded joint command → MuJoCo / hardware
+┌─────────────────────────────────────────────────────────┐
+│                    INPUT LAYER                          │
+│  ┌──────────────────┐    ┌───────────────────────────┐  │
+│  │ Quest 3 / WebXR  │    │ Robot Hand Model (MJCF)   │  │
+│  │ Hand Tracking     │    │                           │  │
+│  └────────┬─────────┘    └──────────┬────────────────┘  │
+│           │                         │                    │
+│           ▼                         ▼                    │
+│  ┌─────────────────┐    ┌──────────────────────────┐    │
+│  │ Feature Extract  │    │ Morphology & Transmission│    │
+│  │ • pinch distance │    │ Parser (Algorithm 1)     │    │
+│  │ • curl angles    │    │ • finger chains & roles  │    │
+│  │ • approach vel   │    │ • contact frames (SVD)   │    │
+│  │ • contact scores │    │ • actuator/tendon specs  │    │
+│  └────────┬─────────┘    └──────────┬────────────────┘  │
+└───────────┼──────────────────────────┼──────────────────┘
+            │                          │
+            │                          ▼
+            │               ┌─────────────────────┐
+            │               │ Template Enumeration │
+            │               │ (Algorithm 2)        │
+            │               │ open / pinch / multi  │
+            │               │ / closure + canonical │
+            │               └──────────┬──────────┘
+            │                          │
+            ▼                          ▼
+┌───────────────────────────────────────────────────────┐
+│              INTENT INFERENCE LAYER                   │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ Bayesian Template Filter (HMM, Algorithm 3)     │  │
+│  │ • energy-based observation likelihood           │  │
+│  │ • FK-based transition costs                     │  │
+│  │ • posterior hysteresis + min dwell constraint    │  │
+│  └──────────────────────┬──────────────────────────┘  │
+└─────────────────────────┼─────────────────────────────┘
+                          │
+                          ▼
+┌───────────────────────────────────────────────────────┐
+│              EXECUTION LAYER (Algorithm 4)            │
+│                                                       │
+│  ┌─────────────────┐      ┌────────────────────────┐  │
+│  │ Direct Path     │      │ Proxy Path             │  │
+│  │ (Allegro, Wuji, │      │ (Amazing Hand, etc.)   │  │
+│  │  LEAP, ORCA,    │      │                        │  │
+│  │  Sharpa)        │      │ • actuator probing     │  │
+│  │                 │      │ • finite-diff Jacobian │  │
+│  │ Bounded NLS:    │      │ • damped LS in         │  │
+│  │ • gap closure   │      │   actuator space       │  │
+│  │ • normal align  │      │ • pair gap solver      │  │
+│  │ • smoothness    │      │                        │  │
+│  │ • surface UV    │      │                        │  │
+│  └────────┬────────┘      └───────────┬────────────┘  │
+│           │                           │                │
+│           ▼                           ▼                │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ Execution State Machine                         │  │
+│  │ approach → acquire → track/hold → fallback      │  │
+│  └──────────────────────┬──────────────────────────┘  │
+└─────────────────────────┼─────────────────────────────┘
+                          │
+                          ▼
+              Joint / Actuator Command
+                → MuJoCo / Hardware
 ```
 
-| Layer | Role |
-|---|---|
-| **Morphology import** | Parse MJCF, infer finger chains, auto-extract pad contact frames from mesh patches via SVD, derive per-hand tolerances. |
-| **Contact templates** | Discrete executable objects (open / precision pinch / multi-pinch / closure) carrying contact roles, pad frames, and solver tolerances. |
-| **Bayesian intent filter** | HMM forward update over templates; transition costs derived from geometric workspace proximity, not hand-tuned penalties. |
-| **Closed-chain projection** | Bounded NLS solver that maintains the selected contact; pad-normal residual resolves thumb redundancy through contact geometry rather than posture priors. |
+---
 
-## What it is not
+## 📊 Results
 
-- **Not a grasping or force-closure method.** Small pad gap + aligned frames ≠ wrench-space closure or stable object manipulation.
-- **Not for coupled / underactuated hands (yet).** Tendon-driven or synergy-coupled transmissions need an actuator-space execution layer (future work).
-- **Not a learned policy.** No training, no target-domain demonstrations. Runtime source of truth is morphology metadata and geometric constraints.
+Evaluated on replayed Quest 3 / WebXR hand-tracking logs in MuJoCo simulation. All methods replay the **same operator input** per hand; differences are purely algorithmic.
 
-## Results
+### Cross-Method Comparison
 
-Evaluated across **5 hands × 3 sessions per hand** (15 VR replay experiments), all from real Quest 3/WebXR logs replayed in MuJoCo:
+| Hand | Method | Mean Distance (mm) | p95 Distance (mm) | 30mm Success Rate | Hold Loss Rate |
+|:---|:---|---:|---:|---:|---:|
+| **Wuji Right** | **MICTF** | **14.75** | **36.12** | **0.947** | **0.076** |
+| Wuji Right | DexPilot-style | 57.56 | 81.34 | 0.059 | 0.827 |
+| Wuji Right | Joint Copy | 64.85 | 84.33 | 0.009 | 0.976 |
+| Wuji Right | Fingertip IK | 73.98 | 93.90 | 0.015 | 0.993 |
+| **Allegro Right** | **MICTF** | **14.65** | **35.44** | **0.937** | **0.000** |
+| Allegro Right | DexPilot-style | 80.61 | 91.40 | 0.000 | 1.000 |
+| Allegro Right | Joint Copy | 88.64 | 142.60 | 0.023 | 0.938 |
+| Allegro Right | Fingertip IK | 102.55 | 166.06 | 0.003 | 0.991 |
 
-| Hand | MICTF gap mean | Best baseline gap | MICTF Gap@10 | MICTF Acq. |
-|------|---------------|-------------------|--------------|------------|
-| Wuji Right | **8.3 mm** | 40.3 mm (Joint copy) | 0.788 | 0.722 |
-| Allegro Right | **15.4 mm** | 51.0 mm (Joint copy) | 0.803 | 0.667 |
-| LEAP Right | **19.2 mm** | 44.4 mm (DexPilot) | 0.484 | 0.533 |
-| ORCA Right v1 | **8.9 mm** | 23.6 mm (Joint copy) | 0.841 | 0.278 |
-| Sharpa Wave | **13.5 mm** | 39.7 mm (Joint copy) | 0.563 | 0.278 |
+### Ablation Study (Key Findings)
 
-Key observations:
-- **DexPilot wins on its own metric** (vector error): 22–48 mm vs MICTF's 59–107 mm. This is expected — MICTF trades vector fidelity for pad alignment.
-- **MICTF wins on contact maintenance** (gap, hold-gap): 2–4× lower gap across all 5 hands.
-- **No baseline acquires stable contact** (Acq. = 0.000 for DexPilot/IK on all hands). MICTF is the only method that transitions into held contact.
-- **Disabling the closed-chain solver** collapses gap to baseline levels, confirming the projection layer — not template selection alone — is doing the work.
+| Ablated Module | Effect on Wuji Right | Effect on Allegro Right |
+|:---|:---|:---|
+| Remove closed-chain projection | Distance: 14.75 → **76.46 mm** | Distance: 14.65 → **100.69 mm** |
+| Remove temporal filtering | Hold switches: 0.619 → 0.762 | Posterior confidence drops |
+| Fixed contact point (no surface UV) | Solver success: 0.974 → **0.000** | Solver success: 0.990 → 0.465 |
 
-The trade-off is explicit and structural: DexPilot achieves better endpoint vector matching; MICTF achieves pad-level contact at the cost of visual similarity to the operator's hand posture.
+---
 
-## Supported hands
+## 🤖 Supported Hands
 
-The same import path covers heterogeneous position-controlled hands — no per-hand code:
+Unified import pipeline — no per-hand code or configuration:
 
-| Hand | DOF | Fingers | Templates | Validation |
-|------|-----|---------|-----------|-----------|
-| Allegro Right | 16 | 4 | 9 | VR replay (3 sessions) |
-| Wuji Right | 20 | 5 | 12 | VR replay (3 sessions) |
-| LEAP Right | 16 | 4 | 9 | VR replay (3 sessions) |
-| ORCA Right v1 | 16 | 5 | 12 | VR replay (3 sessions) |
-| Sharpa Wave | 22 | 5 | 12 | VR replay (3 sessions) |
-| Shadow Right | 22 | 5 | 12 | Tendon topology diagnostic |
-| Robotiq 2F-85 | 8 | 4 | 0 | Non-opposable diagnostic |
+| Hand | DOF | Fingers | Templates | Execution Path | Validation Level |
+|:---|---:|---:|---:|:---|:---|
+| JackHand | 10 | 3 | 9 | Joint space | Quest 3 replay |
+| Allegro Right | 16 | 4 | 12 | Joint space | Quest 3 replay |
+| Wuji Right/Left | 20 | 5 | 15 | Joint space | Quest 3 replay |
+| LEAP Right | 16 | 4 | 12 | Joint space | Import + solver sweep |
+| ORCA Right v1 | 16 | 5 | 15 | Joint space | Import + solver sweep |
+| Sharpa Wave | 22 | 5 | 15 | Joint space | Import + solver sweep |
+| Amazing Hand | 8 act. / 32 jnt. | 4 | 12 | Actuator proxy | VR replay (162.6s) |
+| Robotiq 2F-85 | 2 | 2 | — | Diagnostic only | Non-opposable topology |
 
-## Demonstrations
+> **ORCA Right v1** and **Sharpa Wave** were imported successfully with **zero adaptation** — no code changes were made for these hands during development.
 
-| Segment | What it shows | Link |
-|---|---|---|
-| Closed-chain hold | Pad-level contact maintained while the operator continues to move after acquisition | [▶ Watch on YouTube](https://youtu.be/rv6dafFKCII) |
+---
+
+## 🎬 Demo
+
+**Four-hand side-by-side** (Wuji · Allegro · ORCA · Sharpa) — closed-chain contact maintenance under replayed operator motion, 1.5× speed:
+
+<p align="center">
+  <img src="assets/multihand_demo.gif" alt="MICTF four-hand closed-chain contact demo" width="90%">
+</p>
+<p align="center"><em>Each panel: same replayed Quest 3 input, different morphology. Pad-level contact is maintained across all four hands after acquisition.</em></p>
+
+Single-clip demo:
 
 <p align="center">
   <a href="https://youtu.be/rv6dafFKCII">
-    <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="MICTF closed-chain hold demo" width="70%">
+    <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="MICTF Demo" width="70%">
   </a>
+  <br>
+  <a href="https://youtu.be/rv6dafFKCII">▶ Watch on YouTube</a>
 </p>
 
-## Roadmap
+---
 
-- [x] Morphology import + automatic contact-frame extraction
-- [x] Bayesian template intent filter with FK-based transition costs
-- [x] Closed-chain contact projection (joint-space + surface UV co-optimization)
-- [x] Per-hand Quest 3 replay baselines (5 hands × 3 sessions)
-- [ ] Real-hardware validation
+## ⚠️ Limitations
+
+- **Not a grasp planner** — No force closure, friction cone, or object stability guarantees.
+- **Geometric contact only** — No tactile feedback or contact force estimation in the current loop.
+- **Static contact primitives** — Covers contact acquisition and maintenance; in-hand manipulation (rolling, finger gaiting) is future work.
+- **Simulation-validated** — Hardware experiments and user studies are planned but not yet completed.
+- **No training data required** — Runtime depends entirely on morphology metadata and geometric constraints.
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Morphology import + automatic contact frame extraction
+- [x] Template enumeration from hand topology
+- [x] Bayesian intent filter with FK-based transition costs
+- [x] Closed-chain post-contact projection with surface UV
+- [x] Pre-contact guided trajectory generation
+- [x] Actuator-space proxy solver for coupled/underactuated hands
+- [x] Quest 3 replay evaluation (JackHand, Wuji, Allegro)
+- [x] Zero-adaptation import validation (ORCA, Sharpa Wave)
+- [x] Multi-hand simultaneous replay (6 hands, same trajectory)
+- [ ] Real-hardware closed-loop validation
+- [ ] Multi-input device support (data gloves)
+- [ ] Object-in-hand task-level evaluation
 - [ ] User study (NASA-TLX, task completion time)
-- [ ] Actuator-space execution for coupled/underactuated hands
 
-## Repository
+---
 
-The MICTF research repository (source code, experiment pipelines, and paper drafts) is currently private and will be released alongside the paper. This page tracks the project's public status.
+## 💻 Code
 
-## Citation
+Source code and experiment pipelines are in a private repository, to be released alongside the paper. This page tracks public project status.
 
-A BibTeX entry will be provided upon publication. For now, please reference this page or open a Discussion if you need to cite the work in progress.
+---
 
-## License
+## 📖 Citation
 
-Project description and documentation: see [`LICENSE`](LICENSE). Source code release terms will be announced with the code.
+```bibtex
+@article{mo2026mictf,
+  title   = {MICTF: Morphology-Informed Contact Template Framework for
+             Cross-Embodiment Dexterous Hand Teleoperation},
+  author  = {Mo, Huairan},
+  journal = {IEEE Robotics and Automation Letters (in preparation)},
+  year    = {2026}
+}
+```
+
+---
+
+## 📄 License
+
+Documentation and assets: [MIT License](LICENSE). Source code license will be announced with release.

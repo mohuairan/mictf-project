@@ -1,0 +1,14 @@
+# Raw video sources (too large for git, kept locally)
+assets/*/
+assets/*.mp4
+
+# Keep processed assets
+!assets/banner.png
+!assets/multihand_demo.gif
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
