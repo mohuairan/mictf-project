@@ -31,7 +31,9 @@ The long-term framework vision is zero-shot cross-embodiment teleoperation via c
 
 ## Why MICTF
 
-Most retargeting methods — DexPilot-style vector tracking, joint copy, fingertip IK — answer "where should the fingertips go?" They work well in free space. But once two pads have made contact and the operator keeps moving, these representations have nothing to say about how the surfaces should keep meeting. The contact silently opens up.
+Most online retargeting methods — DexPilot-style vector tracking, joint copy, fingertip IK, AnyTeleop-style pipelines — answer "where should the fingertips go?" They work well in free space. But once two pads have made contact and the operator keeps moving, these representations have nothing to say about how the surfaces should keep meeting. The contact silently opens up.
+
+(Contact-rich optimization methods — contact-invariant control, relaxed-IK with contact constraints — *are* contact-aware, but operate as offline planners or offline trajectory optimizers, not as online retargeting layers that maintain contact under live operator motion. MICTF targets the latter regime.)
 
 This is structural. A 4-DOF robot thumb constrained only by a 3D thumb-tip vector has one unconstrained DOF: pad rotation about the thumb–fingertip axis. DexPilot's smoothness regularizer parks this free DOF near the seed but provides no contact-geometric guidance. MICTF instead consumes that free DOF with task geometry: a pad-normal alignment residual that forces the thumb pad to face the opposing surface. Kinematic redundancy — usually a nuisance to be regularized away — becomes the mechanism that *maintains* contact.
 
