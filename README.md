@@ -13,7 +13,7 @@
   <a href="https://youtu.be/rv6dafFKCII"><img src="https://img.shields.io/badge/Demo-YouTube-red?logo=youtube" alt="YouTube Demo"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/MuJoCo-3.x-orange" alt="MuJoCo 3.x">
+  <img src="https://img.shields.io/badge/MuJoCo-3.x-orange" alt="MuJoCo 3.8">
   <img src="https://img.shields.io/badge/Status-Paper_in_Preparation-yellow" alt="Status">
 </p>
 
@@ -89,11 +89,11 @@ The same import pipeline covers heterogeneous position-controlled hands — no p
 </p>
 <p align="center"><em>Each panel: same replayed Quest 3 input, different morphology. Pad-level contact is maintained across all four hands after acquisition.</em></p>
 
-Single-clip demo:
+**One trajectory, five hands** — the same Quest 3 hand-tracking replay mapped onto five different morphologies (Wuji · Allegro · LEAP · ORCA · Sharpa), showing that MICTF establishes stable contact across all of them without per-hand tuning:
 
 <p align="center">
   <a href="https://youtu.be/rv6dafFKCII">
-    <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="MICTF Demo" width="70%">
+    <img src="https://img.youtube.com/vi/rv6dafFKCII/maxresdefault.jpg" alt="MICTF one-trajectory-five-hands demo" width="70%">
   </a>
   <br>
   <a href="https://youtu.be/rv6dafFKCII">Watch on YouTube</a>
